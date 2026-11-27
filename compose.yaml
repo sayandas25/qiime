@@ -1,0 +1,29 @@
+services:
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    environment:
+      WORKER_TOKEN: ${WORKER_TOKEN:?Set WORKER_TOKEN in .env}
+      MAX_FILE_GIB: ${MAX_FILE_GIB:-100}
+      PROJECT_GIB: ${PROJECT_GIB:-500}
+      MAX_THREADS: ${MAX_THREADS:-16}
+      TMPDIR: /data/tmp
+      EMU_DATABASE_DIR: /data/emu_db
+    volumes:
+      - ./data:/data
+    ports:
+      - "127.0.0.1:8000:8000"
+    restart: unless-stopped
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    environment:
+      WORKER_URL: http://worker:8000
+      WORKER_PUBLIC_URL: ${WORKER_PUBLIC_URL:-http://localhost:8000}
+      WORKER_TOKEN: ${WORKER_TOKEN:?Set WORKER_TOKEN in .env}
+      PORTAL_PASSWORD: ${PORTAL_PASSWORD:?Set PORTAL_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:8501:8501"
+    restart: unless-stopped

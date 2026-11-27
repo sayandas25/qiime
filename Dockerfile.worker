@@ -1,0 +1,11 @@
+FROM mambaorg/micromamba:2.3.2 AS ont_env
+RUN micromamba create -y -p /opt/emu -c conda-forge -c bioconda emu=3.6.2 cutadapt=5.2 && micromamba clean --all --yes
+
+FROM quay.io/qiime2/qiime2-workshop:2026.10
+COPY --from=ont_env /opt/emu /opt/emu
+WORKDIR /app
+RUN python -m pip install --no-cache-dir 'fastapi>=0.115,<1' 'uvicorn>=0.32,<1'
+COPY pipeline.py worker.py uploader.html ont.py tables.py /app/
+ENV PROJECT_ROOT=/data/projects
+EXPOSE 8000
+ENTRYPOINT ["python", "-m", "uvicorn", "worker:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1", "--no-access-log"]
